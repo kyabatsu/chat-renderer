@@ -1,0 +1,169 @@
+{
+  "metadata": {
+    "title": "Sample Stream",
+    "platform": "twitch",
+    "duration_ms": 60000,
+    "recorded_at": "2024-01-15T20:00:00Z"
+  },
+  "messages": [
+    {
+      "id": "msg-001",
+      "timestamp_ms": 1000,
+      "type": "chat",
+      "author": {
+        "id": "user-123",
+        "name": "ChatterOne",
+        "color": "#FF6B6B",
+        "badges": ["subscriber_12.png"]
+      },
+      "content": {
+        "raw": "Hello everyone!",
+        "segments": [
+          { "type": "text", "value": "Hello everyone!" }
+        ]
+      }
+    },
+    {
+      "id": "msg-002",
+      "timestamp_ms": 2500,
+      "type": "chat",
+      "author": {
+        "id": "user-456",
+        "name": "EmoteSpammer",
+        "color": "#4ECDC4",
+        "badges": ["moderator.png", "subscriber_24.png"]
+      },
+      "content": {
+        "raw": "LUL LUL LUL",
+        "segments": [
+          { "type": "emoji", "id": "LUL.png", "name": "LUL" },
+          { "type": "text", "value": " " },
+          { "type": "emoji", "id": "LUL.png", "name": "LUL" },
+          { "type": "text", "value": " " },
+          { "type": "emoji", "id": "LUL.png", "name": "LUL" }
+        ]
+      }
+    },
+    {
+      "id": "msg-003",
+      "timestamp_ms": 5000,
+      "type": "bits",
+      "author": {
+        "id": "user-789",
+        "name": "BitsDonator",
+        "color": "#9B59B6",
+        "badges": ["bits_100.png"]
+      },
+      "content": {
+        "raw": "Great stream! Cheer100",
+        "segments": [
+          { "type": "text", "value": "Great stream! " },
+          { "type": "emoji", "id": "cheer100.gif", "name": "Cheer100" }
+        ]
+      },
+      "bits": {
+        "amount": 100,
+        "tier": 2
+      }
+    },
+    {
+      "id": "msg-004",
+      "timestamp_ms": 8000,
+      "type": "membership",
+      "author": {
+        "id": "user-111",
+        "name": "NewSubscriber",
+        "color": "#3498DB",
+        "badges": ["subscriber_0.png"]
+      },
+      "content": {
+        "raw": "",
+        "segments": []
+      },
+      "membership": {
+        "tier": "Tier 1",
+        "months": 1,
+        "isGift": false
+      }
+    },
+    {
+      "id": "msg-005",
+      "timestamp_ms": 10000,
+      "type": "superchat",
+      "author": {
+        "id": "user-222",
+        "name": "SuperChatter",
+        "color": "#F39C12",
+        "badges": ["member.png"]
+      },
+      "content": {
+        "raw": "Love the content, keep it up!",
+        "segments": [
+          { "type": "text", "value": "Love the content, keep it up!" }
+        ]
+      },
+      "superchat": {
+        "amount": 10,
+        "currency": "USD",
+        "tier": 3
+      }
+    },
+    {
+      "id": "msg-006",
+      "timestamp_ms": 12000,
+      "type": "gift",
+      "author": {
+        "id": "user-333",
+        "name": "GiftGiver",
+        "color": "#E74C3C",
+        "badges": ["subscriber_36.png", "gift_leader.png"]
+      },
+      "content": {
+        "raw": "",
+        "segments": []
+      },
+      "membership": {
+        "isGift": true,
+        "giftCount": 5,
+        "tier": "Tier 1"
+      }
+    },
+    {
+      "id": "msg-007",
+      "timestamp_ms": 15000,
+      "type": "deleted",
+      "author": {
+        "id": "user-444",
+        "name": "DeletedUser",
+        "color": "#95A5A6",
+        "badges": []
+      },
+      "content": {
+        "raw": "This message was deleted",
+        "segments": [
+          { "type": "text", "value": "This message was deleted" }
+        ]
+      },
+      "deleted": {
+        "deleted_at_ms": 16000
+      }
+    },
+    {
+      "id": "msg-008",
+      "timestamp_ms": 20000,
+      "type": "chat",
+      "author": {
+        "id": "user-555",
+        "name": "LongMessageWriter",
+        "color": "#1ABC9C",
+        "badges": ["vip.png"]
+      },
+      "content": {
+        "raw": "This is a longer message that will wrap to multiple lines to test how the renderer handles word wrapping and line calculations properly",
+        "segments": [
+          { "type": "text", "value": "This is a longer message that will wrap to multiple lines to test how the renderer handles word wrapping and line calculations properly" }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "name": "chat-renderer",
+  "version": "1.0.0",
+  "description": "Render chat replay as video overlay with chroma key background",
+  "main": "src/index.js",
+  "scripts": {
+    "render": "node src/index.js",
+    "test": "node src/index.js ./data/sample.json ./output/test.mp4"
+  },
+  "keywords": [
+    "chat",
+    "renderer",
+    "twitch",
+    "youtube",
+    "overlay",
+    "video"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "puppeteer": "^24.35.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

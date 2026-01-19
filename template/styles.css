@@ -1,0 +1,166 @@
+/**
+ * Chat Renderer Styles
+ * 
+ * CSS Variables (set dynamically by Puppeteer):
+ * --font-size: Base font size
+ * --line-height: Line height multiplier
+ * --text-color: Default text color
+ * --username-color: Default username color
+ * --chroma-color: Chroma key background
+ */
+
+:root {
+  --font-size: 16px;
+  --line-height: 1.4;
+  --text-color: #FFFFFF;
+  --username-color: #AAAAAA;
+  --chroma-color: #000000;
+
+  /* Derived values */
+  --badge-size: calc(var(--font-size) * 1.1);
+  --emoji-size: calc(var(--font-size) * 1.25);
+  --message-padding: 4px;
+  --horizontal-padding: 12px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--chroma-color);
+}
+
+body {
+  font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  font-size: var(--font-size);
+  line-height: var(--line-height);
+  color: var(--text-color);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* === Chat Container === */
+#chat-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end; /* Messages stack from bottom */
+  padding: var(--horizontal-padding);
+  overflow: hidden;
+}
+
+/* === Message Base === */
+.message {
+  padding: var(--message-padding) 8px;
+  margin-bottom: 2px;
+  border-radius: 4px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+
+  /* Text shadow for readability over chroma */
+  text-shadow: 
+    1px 1px 1px rgba(0, 0, 0, 0.8),
+    -1px -1px 1px rgba(0, 0, 0, 0.4);
+}
+
+/* === Badges === */
+.badges {
+  display: inline;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+.badge {
+  width: var(--badge-size);
+  height: var(--badge-size);
+  vertical-align: middle;
+  margin-right: 2px;
+  object-fit: contain;
+}
+
+/* === Username === */
+.username {
+  color: var(--username-color);
+  font-weight: 600;
+}
+
+.separator {
+  color: var(--text-color);
+}
+
+/* === Message Content === */
+.content {
+  color: var(--text-color);
+}
+
+.emoji {
+  width: var(--emoji-size);
+  height: var(--emoji-size);
+  vertical-align: middle;
+  margin: 0 1px;
+  object-fit: contain;
+}
+
+/* === Deleted Messages === */
+.message.deleted {
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+
+/* Alternative: hide deleted entirely */
+/* .message.deleted { display: none; } */
+
+/* === Superchat / Donation === */
+.message.superchat {
+  background-color: #1565C0; /* Overridden inline by tier */
+  border-radius: 4px;
+  padding: 8px;
+  margin-bottom: 4px;
+}
+
+.superchat-amount {
+  font-weight: 700;
+  margin-right: 4px;
+}
+
+/* === Bits === */
+.message.bits {
+  /* Subtle highlight for bits messages */
+  background-color: rgba(156, 62, 232, 0.2);
+  border-left: 3px solid #9C3EE8;
+}
+
+.bits-amount {
+  font-weight: 700;
+}
+
+/* === Membership / Sub / Gift === */
+.message.membership {
+  background-color: rgba(100, 65, 164, 0.3);
+  border-left: 3px solid #6441A4;
+}
+
+.membership-text {
+  font-style: italic;
+  color: #B9A3E3;
+}
+
+/* === System Messages (if needed) === */
+.message.system {
+  color: #888888;
+  font-style: italic;
+  text-align: center;
+}
+
+/* === Scrollbar (hidden but functional) === */
+#chat-container::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}

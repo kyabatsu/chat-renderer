@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat Renderer</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="chat-container">
+    <!-- Messages are rendered here -->
+  </div>
+
+  <script>
+    /**
+     * Chat rendering logic
+     * Called from Puppeteer via page.evaluate()
+     */
+
+    // Config injected by Puppeteer
+    const CONFIG = window.CHAT_CONFIG || {
+      fontSize: 16,
+      lineHeight: 1.4,
+      textColor: '#FFFFFF',
+      usernameColor: '#AAAAAA',
+      chromaColor: '#000000',
+      assetsDir: './assets',
+      badgesSubdir: 'badges',
+      emojisSubdir: 'emojis',
+      superchatTiers: {},
+      bitsTiers: {},
+    };
+
+    // Apply dynamic styles
+    document.documentElement.style.setProperty('--font-size', CONFIG.fontSize + 'px');
+    document.documentElement.style.setProperty('--line-height', CONFIG.lineHeight);
+    document.documentElement.style.setProperty('--text-color', CONFIG.textColor);
+    document.documentElement.style.setProperty('--username-color', CONFIG.usernameColor);
+    document.documentElement.style.setProperty('--chroma-color', CONFIG.chromaColor);
+
+    /**
+     * Build asset path for badges/emojis
+     */
+    function assetPath(type, id) {
+      const subdir = type === 'badge' ? CONFIG.badgesSubdir : CONFIG.emojisSubdir;
+      return `${CONFIG.assetsDir}/${subdir}/${id}`;
+    }
+
+    /**
+     * Get superchat tier styling
+     */
+    function getSuperchatStyle(amount) {
+      const tiers = Object.values(CONFIG.superchatTiers).sort((a, b) => b.minAmount - a.minAmount);
+      for (const tier of tiers) {
+        if (amount >= tier.minAmount) {
+          return tier;
+        }
+      }
+      return tiers[tiers.length - 1] || { bg: '#1565C0' };
+    }
+
+    /**
+     * Get bits tier color
+     */
+    function getBitsColor(amount) {
+      const tiers = Object.values(CONFIG.bitsTiers).sort((a, b) => b.minBits - a.minBits);
+      for (const tier of tiers) {
+        if (amount >= tier.minBits) {
+          return tier.color;
+        }
+      }
+      return tiers[tiers.length - 1]?.color || '#9C3EE8';
+    }
+
+    /**
+     * Render a single message to HTML
+     */
+    function renderMessage(msg) {
+      const container = document.createElement('div');
+      container.className = 'message';
+      container.dataset.id = msg.id;
+
+      // Handle deleted messages
+      if (msg._deleted || msg.type === 'deleted') {
+        container.classList.add('deleted');
+      }
+
+      // Handle special message types
+      if (msg.type === 'superchat') {
+        container.classList.add('superchat');
+        const style = getSuperchatStyle(msg.superchat?.amount || 0);
+        container.style.backgroundColor = style.bg;
+      } else if (msg.type === 'bits') {
+        container.classList.add('bits');
+      } else if (msg.type === 'membership' || msg.type === 'gift') {
+        container.classList.add('membership');
+      }
+
+      // Badges
+      if (msg.author?.badges && msg.author.badges.length > 0) {
+        const badgesSpan = document.createElement('span');
+        badgesSpan.className = 'badges';
+        
+        for (const badgeId of msg.author.badges) {
+          const img = document.createElement('img');
+          img.className = 'badge';
+          img.src = assetPath('badge', badgeId);
+          img.alt = '';
+          badgesSpan.appendChild(img);
+        }
+        
+        container.appendChild(badgesSpan);
+      }
+
+      // Username
+      if (msg.author?.name) {
+        const username = document.createElement('span');
+        username.className = 'username';
+        if (msg.author.color) {
+          username.style.color = msg.author.color;
+        }
+        username.textContent = msg.author.name;
+        container.appendChild(username);
+
+        const separator = document.createElement('span');
+        separator.className = 'separator';
+        separator.textContent = ': ';
+        container.appendChild(separator);
+      }
+
+      // Bits amount prefix
+      if (msg.type === 'bits' && msg.bits?.amount) {
+        const bitsAmount = document.createElement('span');
+        bitsAmount.className = 'bits-amount';
+        bitsAmount.style.color = getBitsColor(msg.bits.amount);
+        bitsAmount.textContent = `${msg.bits.amount} `;
+        container.appendChild(bitsAmount);
+      }
+
+      // Superchat amount header
+      if (msg.type === 'superchat' && msg.superchat?.amount) {
+        const scAmount = document.createElement('span');
+        scAmount.className = 'superchat-amount';
+        scAmount.textContent = `${msg.superchat.currency || '$'}${msg.superchat.amount} `;
+        container.appendChild(scAmount);
+      }
+
+      // Message content (text + emojis)
+      if (msg.content?.segments) {
+        const content = document.createElement('span');
+        content.className = 'content';
+
+        for (const segment of msg.content.segments) {
+          if (segment.type === 'text') {
+            const text = document.createElement('span');
+            text.textContent = segment.value;
+            content.appendChild(text);
+          } else if (segment.type === 'emoji') {
+            const emoji = document.createElement('img');
+            emoji.className = 'emoji';
+            emoji.src = assetPath('emoji', segment.id);
+            emoji.alt = segment.name || '';
+            emoji.title = segment.name || '';
+            content.appendChild(emoji);
+          }
+        }
+
+        container.appendChild(content);
+      }
+
+      // Membership/gift special text
+      if (msg.type === 'membership' && msg.membership) {
+        const memberText = document.createElement('span');
+        memberText.className = 'membership-text';
+        
+        if (msg.membership.isGift && msg.membership.giftCount) {
+          memberText.textContent = `gifted ${msg.membership.giftCount} subs!`;
+        } else if (msg.membership.months) {
+          memberText.textContent = `subscribed for ${msg.membership.months} months!`;
+        } else {
+          memberText.textContent = 'just subscribed!';
+        }
+        
+        container.appendChild(memberText);
+      }
+
+      return container;
+    }
+
+    /**
+     * Main update function - called from Puppeteer
+     */
+    window.updateChat = function(state) {
+      const container = document.getElementById('chat-container');
+      
+      // Clear and re-render (simple approach)
+      // For optimization, you could diff and update only changed messages
+      container.innerHTML = '';
+
+      for (const msg of state.messages) {
+        const el = renderMessage(msg);
+        container.appendChild(el);
+      }
+
+      // Scroll to bottom (newest messages)
+      container.scrollTop = container.scrollHeight;
+    };
+
+    // Initial empty state
+    window.updateChat({ messages: [] });
+  </script>
+</body>
+</html>
