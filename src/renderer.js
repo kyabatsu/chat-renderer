@@ -8,10 +8,18 @@ const path = require('path');
 const config = require('../config');
 
 class Renderer {
-  constructor() {
+  constructor(broadcasterId = null) {
     this.browser = null;
     this.page = null;
     this.templatePath = path.resolve(__dirname, '../template/chat.html');
+    this.broadcasterId = broadcasterId;
+    
+    // Resolve assets path to absolute file:// URL
+    if (broadcasterId) {
+      this.assetsPath = 'file://' + path.resolve(__dirname, '../assets', broadcasterId);
+    } else {
+      this.assetsPath = 'file://' + path.resolve(__dirname, '..', config.ASSETS_DIR);
+    }
   }
 
   /**
@@ -37,16 +45,23 @@ class Renderer {
       waitUntil: 'domcontentloaded',
     });
 
-    // Inject config into page context
+    // Inject config AND apply styles (must do both since page script already ran with defaults)
     await this.page.evaluate((cfg) => {
       window.CHAT_CONFIG = cfg;
+      
+      // Re-apply CSS variables now that we have real config
+      document.documentElement.style.setProperty('--font-size', cfg.fontSize + 'px');
+      document.documentElement.style.setProperty('--line-height', cfg.lineHeight);
+      document.documentElement.style.setProperty('--text-color', cfg.textColor);
+      document.documentElement.style.setProperty('--username-color', cfg.usernameColor);
+      document.documentElement.style.setProperty('--chroma-color', cfg.chromaColor);
     }, {
       fontSize: config.FONT_SIZE_PX,
       lineHeight: config.LINE_HEIGHT_MULTIPLIER,
       textColor: config.TEXT_COLOR,
       usernameColor: config.USERNAME_COLOR,
       chromaColor: config.CHROMA_KEY_COLOR,
-      assetsDir: config.ASSETS_DIR,
+      assetsDir: this.assetsPath,
       badgesSubdir: config.BADGES_SUBDIR,
       emojisSubdir: config.EMOJIS_SUBDIR,
       superchatTiers: config.SUPERCHAT_TIERS,
@@ -54,6 +69,7 @@ class Renderer {
     });
 
     console.log(`[Renderer] Initialized at ${config.OUTPUT_WIDTH}x${config.OUTPUT_HEIGHT}`);
+    console.log(`[Renderer] Assets path: ${this.assetsPath}`);
   }
 
   /**
@@ -62,26 +78,12 @@ class Renderer {
    */
   async updateChat(chatState) {
     await this.page.evaluate((state) => {
-      // This calls into the chat.html's updateChat function
       if (typeof window.updateChat === 'function') {
         window.updateChat(state);
       } else {
         console.error('updateChat function not found in template');
       }
     }, chatState);
-  }
-
-  /**
-   * Capture current state as raw pixel buffer
-   * @returns Buffer of raw RGB data (for piping to FFmpeg)
-   */
-  async captureRawFrame() {
-    const screenshot = await this.page.screenshot({
-      type: 'png',
-      omitBackground: false, // We want the green background
-      encoding: 'binary',
-    });
-    return screenshot;
   }
 
   /**

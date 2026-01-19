@@ -9,8 +9,8 @@ module.exports = {
   OUTPUT_HEIGHT: 1080,
 
   // === Timing ===
-  FRAMERATE: 30,
-  BATCH_WINDOW_MS: 500,
+  FRAMERATE: 10,
+  BATCH_WINDOW_MS: 100,
   BATCH_MAX_MESSAGES: 12,
 
   // === Chat Display ===
@@ -45,9 +45,9 @@ module.exports = {
   },
 
   // === Asset Paths ===
-  ASSETS_DIR: './assets',
+  ASSETS_DIR: 'E:/Projects/VideoEditing/scripts/chat-renderer/assets',
   BADGES_SUBDIR: 'badges',
-  EMOJIS_SUBDIR: 'emojis',
+  EMOJIS_SUBDIR: 'emotes',
 
   // === FFmpeg ===
   FFMPEG_PATH: 'ffmpeg',            // Or full path if not in PATH

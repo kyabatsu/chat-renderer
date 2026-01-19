@@ -26,7 +26,7 @@
       chromaColor: '#000000',
       assetsDir: './assets',
       badgesSubdir: 'badges',
-      emojisSubdir: 'emojis',
+      emojisSubdir: 'emotes',
       superchatTiers: {},
       bitsTiers: {},
     };
@@ -39,18 +39,27 @@
     document.documentElement.style.setProperty('--chroma-color', CONFIG.chromaColor);
 
     /**
+     * Get current config (allows Puppeteer injection to override defaults)
+     */
+    function getConfig() {
+      return window.CHAT_CONFIG || CONFIG;
+    }
+
+    /**
      * Build asset path for badges/emojis
      */
     function assetPath(type, id) {
-      const subdir = type === 'badge' ? CONFIG.badgesSubdir : CONFIG.emojisSubdir;
-      return `${CONFIG.assetsDir}/${subdir}/${id}`;
+      const cfg = getConfig();
+      const subdir = type === 'badge' ? cfg.badgesSubdir : cfg.emojisSubdir;
+      return `${cfg.assetsDir}/${subdir}/${id}`;
     }
 
     /**
      * Get superchat tier styling
      */
     function getSuperchatStyle(amount) {
-      const tiers = Object.values(CONFIG.superchatTiers).sort((a, b) => b.minAmount - a.minAmount);
+      const cfg = getConfig();
+      const tiers = Object.values(cfg.superchatTiers).sort((a, b) => b.minAmount - a.minAmount);
       for (const tier of tiers) {
         if (amount >= tier.minAmount) {
           return tier;
@@ -63,7 +72,8 @@
      * Get bits tier color
      */
     function getBitsColor(amount) {
-      const tiers = Object.values(CONFIG.bitsTiers).sort((a, b) => b.minBits - a.minBits);
+      const cfg = getConfig();
+      const tiers = Object.values(cfg.bitsTiers).sort((a, b) => b.minBits - a.minBits);
       for (const tier of tiers) {
         if (amount >= tier.minBits) {
           return tier.color;
@@ -106,6 +116,7 @@
           img.className = 'badge';
           img.src = assetPath('badge', badgeId);
           img.alt = '';
+          img.onerror = () => img.style.display = 'none';
           badgesSpan.appendChild(img);
         }
         
@@ -161,6 +172,11 @@
             emoji.src = assetPath('emoji', segment.id);
             emoji.alt = segment.name || '';
             emoji.title = segment.name || '';
+            emoji.onerror = () => {
+              // Replace with text fallback
+              const fallback = document.createTextNode(segment.name ? `:${segment.name}:` : '');
+              emoji.replaceWith(fallback);
+            };
             content.appendChild(emoji);
           }
         }

@@ -83,6 +83,7 @@ body {
   vertical-align: middle;
   margin-right: 2px;
   object-fit: contain;
+  transform: translateY(-40%);
 }
 
 /* === Username === */

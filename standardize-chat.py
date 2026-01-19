@@ -23,6 +23,9 @@ from typing import Optional, List, Dict, Any
 from dataclasses import dataclass, asdict
 from enum import Enum
 
+# === User defined parameters ===
+DEFAULT_EMOJIS_DIR     = './assets/emotes'
+DEFAULT_CHANNEL_EMOTES = r'E:\Projects\VideoEditing\scripts\chat-renderer\assets\emotes\emote_list.json'
 
 # === Unified Schema Dataclasses ===
 
@@ -140,12 +143,9 @@ def detect_format(file_path: str) -> ChatFormat:
 class BaseConverter:
     """Base class for format converters."""
     
-    def __init__(self, channel_emotes_path: Optional[str] = None):
-        """
-        Args:
-            channel_emotes_path: Path to channel_emotes.json for filtering
-        """
+    def __init__(self, channel_emotes_path: Optional[str] = None, emojis_dir: Optional[str] = None):
         self.channel_emotes = set()
+        self.emojis_dir = emojis_dir
         if channel_emotes_path and os.path.exists(channel_emotes_path):
             with open(channel_emotes_path, 'r') as f:
                 self.channel_emotes = set(json.load(f))
@@ -156,6 +156,15 @@ class BaseConverter:
             return True  # No filter, allow all
         return emote_id in self.channel_emotes
     
+    def find_emote_file(self, emote_id: str) -> Optional[str]:
+        """Find emote filename with extension by checking filesystem."""
+        if not self.emojis_dir:
+            return None
+        for ext in ['.gif', '.png']:
+            if os.path.exists(os.path.join(self.emojis_dir, f"{emote_id}{ext}")):
+                return f"{emote_id}{ext}"
+        return None
+
     def convert(self, file_path: str) -> List[UnifiedMessage]:
         raise NotImplementedError
 
@@ -234,9 +243,10 @@ class TwitchDownloaderConverter(BaseConverter):
                 # Check if channel emote, otherwise use placeholder
                 if self.is_channel_emote(emote_id):
                     # Try .gif first, fall back to .png (renderer handles this)
+                    filename = self.find_emote_file(emote_id) or emote_id
                     segments.append(Segment(
                         type='emoji',
-                        id=emote_id,  # Renderer will try .gif then .png
+                        id=filename,
                         name=text.strip()
                     ))
                 else:
@@ -341,7 +351,8 @@ class ChatDownloaderConverter(BaseConverter):
             
             # Emote
             if self.is_channel_emote(emote_id):
-                segments.append(Segment(type='emoji', id=emote_id, name=emote_name))
+                filename = self.find_emote_file(emote_id) or emote_id
+                segments.append(Segment(type='emoji', id=filename, name=emote_name))
             else:
                 segments.append(Segment(type='text', value=f":{emote_name}:"))
             
@@ -566,7 +577,7 @@ class YtdlpLiveConverter(BaseConverter):
 
 # === Main Converter Factory ===
 
-def get_converter(format_type: ChatFormat, channel_emotes_path: Optional[str] = None) -> BaseConverter:
+def get_converter(format_type: ChatFormat, channel_emotes_path: Optional[str] = None, emojis_dir: Optional[str] = None) -> BaseConverter:
     """Get appropriate converter for format."""
     converters = {
         ChatFormat.TWITCH_DOWNLOADER: TwitchDownloaderConverter,
@@ -579,10 +590,10 @@ def get_converter(format_type: ChatFormat, channel_emotes_path: Optional[str] = 
     if not converter_class:
         raise ValueError(f"No converter for format: {format_type}")
     
-    return converter_class(channel_emotes_path)
+    return converter_class(channel_emotes_path, emojis_dir)
 
 
-def convert_file(input_path: str, channel_emotes_path: Optional[str] = None, dry_run: bool = False) -> str:
+def convert_file(input_path: str, channel_emotes_path: Optional[str] = None, emojis_dir: Optional[str] = None, dry_run: bool = False) -> str:
     """
     Convert chat file to unified format.
     
@@ -606,7 +617,7 @@ def convert_file(input_path: str, channel_emotes_path: Optional[str] = None, dry
     
     # Convert
     print(f"Converting...")
-    converter = get_converter(format_type, channel_emotes_path)
+    converter = get_converter(format_type, channel_emotes_path, emojis_dir)
     messages = converter.convert(str(input_path))
     print(f"  Converted {len(messages)} messages")
     
@@ -704,13 +715,13 @@ def main():
     
     parser = argparse.ArgumentParser(description='Convert chat formats to unified schema')
     parser.add_argument('input', help='Input chat JSON/JSONL file')
-    parser.add_argument('--channel-emotes', help='Path to channel_emotes.json for filtering')
+    parser.add_argument('--channel-emotes', default=DEFAULT_CHANNEL_EMOTES, help='Path to channel_emotes.json for filtering')
     parser.add_argument('--dry-run', action='store_true', help="Don't write files, just show what would happen")
-    
+    parser.add_argument('--emojis-dir', default=DEFAULT_EMOJIS_DIR, help='Path to emojis directory for extension lookup')
     args = parser.parse_args()
     
     try:
-        convert_file(args.input, args.channel_emotes, args.dry_run)
+        convert_file(args.input, args.channel_emotes, args.emojis_dir, args.dry_run)
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
